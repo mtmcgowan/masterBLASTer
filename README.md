@@ -1,4 +1,4 @@
-![alt text](master_BLASTer.png = 250x250)
+<img width="40%" height="40%" src="master_BLASTer.png">
 
 # masterBLASTer
 A SLURM tool for performing parallel BLAST searches.
