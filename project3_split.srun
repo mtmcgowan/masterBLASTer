@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#SBATCH --job-name=SPLIT
+#SBATCH --output=logs/split.out
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=24:00:00
+
+# Assign fasta filename from pass parameter
+fasta_filename=$1
+blocknum=$2
+
+# Get the number of queries
+query_ct=$(grep -c "^>" $fasta_filename)
+
+# Get the indices of each accession
+line_index=($(awk '/>/ {print FNR}' $fasta_filename))
+
+# Determine the split locations
+block_size=$(($query_ct/$blocknum))
+end=0
+start=0
+infile=$fasta_filename
+
+# Make a directory to store temporary files
+mkdir -p temp
+
+# Use for loop to split the original file into multiple small files
+for block in $(seq 1 $(($blocknum-1)));
+do
+out_top="temp/block_"$block
+out_bot="temp/leftovers_"$block
+split_loc=${line_index[block_size * block]}
+end=$(($split_loc - $start))
+echo $split_loc
+echo $end
+echo "\n"
+awk 'NR < '$end'{ print >> "'$out_top'"; next } {print>>"'$out_bot'"}' $infile
+infile=$out_bot
+start=$(($split_loc - 1))
+done
+
+# Rename the final block
+outfile="temp/block_"$blocknum
+mv $infile $outfile
+
+# Remove intermediates
+rm temp/leftovers*
+
+# Exit status
+echo "Step 1 exit status: "$?

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#SBATCH --job-name=MERGE
+#SBATCH --output=logs/merge_parBLAST.out
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=24:00:00
+
+# Load necessary modules
+module add anaconda3
+
+# Run the python script
+python3 merge.py $1

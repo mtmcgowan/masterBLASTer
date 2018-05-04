@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#SBATCH --job-name=BLASTp
+#SBATCH --output=logs/blast_block_%a.out
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=24:00:00
+
+## Load the necessary modules
+module load blast
+
+## Interpret input parameters
+blastdb=$1
+blocknum=$2
+
+## Define the job array
+blocklist=($(seq 1 $blocknum))
+block=${blocklist[$SLURM_ARRAY_TASK_ID]}
+
+## Define particular file to use based on array
+queryname="temp/block_${block}"
+outfile="temp/blastout_block_${block}.tsv"
+## Run blastp using the appropriate file
+blastp -db $blastdb -query $queryname -out $outfile -outfmt "6 qacc sacc stitle pident length mismatch gapopen qstart qend sstart send evalue bitscore"

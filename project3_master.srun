@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#SBATCH --job-name=master
+#SBATCH --output=logs/master.out
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=10
+#SBATCH --time=24:00:00
+
+# Unpackaging the config file
+source config.sh
+
+arrayct="0-"$(($blocknum - 1))
+
+# first step - splitting the FASTA file into n chunks (n set in config file)
+jid1=$(sbatch --partition=$partition --account=$account project3_split.srun     $fasta_file $blocknum)
+
+echo "Job RAW: "$jid1
+echo "Job ID: "${jid1##* }
+
+# second step - using an array to blast each chunk in-parallel
+jid2=$(sbatch --partition=$partition --account=$account --array=$arrayct --dependency=afterok:${jid1##* } project3_blast.srun  $blast_db $blocknum)
+
+# third step - combining BLAST results into a single table
+# it will start executing when all arrayjobs have sucessfully completed
+jid3=$(sbatch --partition=$partition \
+       --account=$account \
+       --dependency=afterok:${jid2##* } \
+       project3_merge.srun \
+       $outfile)
